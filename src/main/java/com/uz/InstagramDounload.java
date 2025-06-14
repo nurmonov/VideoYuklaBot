@@ -6,9 +6,9 @@ import java.util.Date;
 
 public class InstagramDounload {
 
-    public String downloadVideo(String url, String prefix) {
+    public String downloadVideo(String url, String prefix,long chatId) {
         String timestamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String outputFilePath = ConfigLoader.get("download.folder") + prefix + "_" + timestamp + ".mp4";
+        String outputFilePath = ConfigLoader.get("download.folder")  + prefix + "_chat" + chatId + "_" + timestamp + ".mp4";
 
         ProcessBuilder builder = new ProcessBuilder(
                 ConfigLoader.get("yt.dlp.path"),

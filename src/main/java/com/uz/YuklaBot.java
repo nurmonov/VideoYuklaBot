@@ -10,9 +10,12 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class YuklaBot extends TelegramLongPollingBot {
    InstagramDounload dounload=new InstagramDounload();
+    private final ExecutorService executor = Executors.newFixedThreadPool(4);
 
 
     @Override
@@ -39,32 +42,14 @@ public class YuklaBot extends TelegramLongPollingBot {
                 return;
             }
 
-            String[] sqlKeywords = {"'", "--", ";", "/*", "*/", "or 1=1", "drop", "select", "insert", "update", "delete"};
-            for (String keyword : sqlKeywords) {
-                if (text.toLowerCase().contains(keyword)) {
-                    sendText(chatId, "🚫 Xabaringizda SQLga o‘xshash ifoda aniqlandi. Bu ruxsat etilmaydi.");
-                    return;
-                }
+            if (isSqlInjection(text)) {
+                sendText(chatId, "🚫 Xabaringizda SQLga o‘xshash ifoda aniqlandi. Bu ruxsat etilmaydi.");
+                return;
             }
 
             if (text.startsWith("http")) {
-                if (text.contains("youtube.com") || text.contains("youtu.be") || text.contains("instagram.com")) {
-                    sendText(chatId, "📥 Video yuklanmoqda, iltimos kuting...");
-
-                    String videoFilePath;
-                    if (text.contains("instagram.com")) {
-                        videoFilePath = dounload.downloadVideo(text, "insta");
-                    } else {
-                        videoFilePath = dounload.downloadVideo(text, "video");
-                    }
-
-                    if (videoFilePath != null) {
-                        sendVideo(chatId, videoFilePath);
-                        deleteFile(videoFilePath);
-                    } else {
-                        sendText(chatId, "❌ Video yuklashda xatolik yuz berdi.");
-                    }
-
+                if (isAllowedUrl(text)) {
+                    executor.submit(new VideoDownloadTask(text, chatId, this));
                 } else {
                     sendText(chatId, "❗ Faqat YouTube va Instagram havolalariga ruxsat beriladi.");
                 }
@@ -74,8 +59,23 @@ public class YuklaBot extends TelegramLongPollingBot {
         }
     }
 
+    private boolean isSqlInjection(String text) {
+        String[] sqlKeywords = {"'", "--", ";", "/*", "*/", "or 1=1", "drop", "select", "insert", "update", "delete"};
+        for (String keyword : sqlKeywords) {
+            if (text.toLowerCase().contains(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-    private void sendText(long chatId, String text) {
+    private boolean isAllowedUrl(String text) {
+        return text.contains("youtube.com") || text.contains("youtu.be") || text.contains("instagram.com");
+    }
+
+
+
+    public void sendText(long chatId, String text) {
         SendMessage msg = new SendMessage();
         msg.setChatId(chatId);
         msg.setText(text);
@@ -86,7 +86,7 @@ public class YuklaBot extends TelegramLongPollingBot {
         }
     }
 
-    private void sendVideo(long chatId, String videoPath) {
+    public void sendVideo(long chatId, String videoPath) {
         try {
             File videoFile = new File(videoPath);
             if (!videoFile.exists()) {
@@ -104,9 +104,21 @@ public class YuklaBot extends TelegramLongPollingBot {
         }
     }
 
+    //   private boolean isSafeContent(String title, String description) {
+//        String combined = (title + " " + description).toLowerCase();
+//        String[] bannedWords = {
+//                "nude", "breastfeeding", "emizish", "topless", "intimate", "explicit",
+//                "sex", "porn", "sensual", "naked", "body", "skin", "xxx", "onlyfans"
+//        };
+//        for (String word : bannedWords) {
+//            if (combined.contains(word)) return false;
+//        }
+//        return true;
+//    }
 
 
-    private void deleteFile(String filePath) {
+
+    public void deleteFile(String filePath) {
         File file = new File(filePath);
         if (file.exists()) {
             if (!file.delete()) {
