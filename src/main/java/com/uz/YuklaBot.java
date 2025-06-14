@@ -27,35 +27,53 @@ public class YuklaBot extends TelegramLongPollingBot {
     }
 
 
+
     @Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             long chatId = update.getMessage().getChatId();
-            String text = update.getMessage().getText();
+            String text = update.getMessage().getText().trim();
 
             if (text.equalsIgnoreCase("/start")) {
-                sendText(chatId, "Salom! YouTube yoki Instagram video URL sini yuboring.");
-            } else if (text.startsWith("http")) {
-                sendText(chatId, "Video yuklanmoqda, iltimos kuting...");
+                sendText(chatId, "👋 Salom! YouTube yoki Instagram video URL sini yuboring.");
+                return;
+            }
 
-                String videoFilePath;
-                if (text.contains("instagram.com")) {
-                    videoFilePath = dounload.downloadVideo(text, "insta");
-                } else {
-                    videoFilePath = dounload.downloadVideo(text, "video");
+            String[] sqlKeywords = {"'", "--", ";", "/*", "*/", "or 1=1", "drop", "select", "insert", "update", "delete"};
+            for (String keyword : sqlKeywords) {
+                if (text.toLowerCase().contains(keyword)) {
+                    sendText(chatId, "🚫 Xabaringizda SQLga o‘xshash ifoda aniqlandi. Bu ruxsat etilmaydi.");
+                    return;
                 }
+            }
 
-                if (videoFilePath != null) {
-                    sendVideo(chatId, videoFilePath);
-                    deleteFile(videoFilePath);
+            if (text.startsWith("http")) {
+                if (text.contains("youtube.com") || text.contains("youtu.be") || text.contains("instagram.com")) {
+                    sendText(chatId, "📥 Video yuklanmoqda, iltimos kuting...");
+
+                    String videoFilePath;
+                    if (text.contains("instagram.com")) {
+                        videoFilePath = dounload.downloadVideo(text, "insta");
+                    } else {
+                        videoFilePath = dounload.downloadVideo(text, "video");
+                    }
+
+                    if (videoFilePath != null) {
+                        sendVideo(chatId, videoFilePath);
+                        deleteFile(videoFilePath);
+                    } else {
+                        sendText(chatId, "❌ Video yuklashda xatolik yuz berdi.");
+                    }
+
                 } else {
-                    sendText(chatId, "Video yuklashda xatolik yuz berdi.");
+                    sendText(chatId, "❗ Faqat YouTube va Instagram havolalariga ruxsat beriladi.");
                 }
             } else {
-                sendText(chatId, "Iltimos, video havolasini yuboring.");
+                sendText(chatId, "ℹ️ Iltimos, YouTube yoki Instagram video havolasini yuboring.");
             }
         }
     }
+
 
     private void sendText(long chatId, String text) {
         SendMessage msg = new SendMessage();
