@@ -17,13 +17,13 @@ public class YuklaBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return ConfigLoader.get("username");
+        return ConfigLoader.get("bot.username");
     }
 
 
     @Override
     public String getBotToken() {
-        return ConfigLoader.get("token");
+        return ConfigLoader.get("bot.token");
     }
 
 
