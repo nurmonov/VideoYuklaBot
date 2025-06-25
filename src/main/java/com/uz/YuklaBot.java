@@ -12,6 +12,8 @@ import org.telegram.telegrambots.meta.api.objects.InputFile;
 import java.io.File;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class YuklaBot extends TelegramLongPollingBot {
    InstagramDounload dounload=new InstagramDounload();
@@ -103,18 +105,6 @@ public class YuklaBot extends TelegramLongPollingBot {
             sendText(chatId, "Videoni yuborishda xatolik yuz berdi: " + e.getMessage());
         }
     }
-
-    //   private boolean isSafeContent(String title, String description) {
-//        String combined = (title + " " + description).toLowerCase();
-//        String[] bannedWords = {
-//                "nude", "breastfeeding", "emizish", "topless", "intimate", "explicit",
-//                "sex", "porn", "sensual", "naked", "body", "skin", "xxx", "onlyfans"
-//        };
-//        for (String word : bannedWords) {
-//            if (combined.contains(word)) return false;
-//        }
-//        return true;
-//    }
 
 
 
